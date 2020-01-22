@@ -1,0 +1,162 @@
+---
+
+#CloudFormation Template to deploy Networking Stack in AWS Cloud
+
+Resources:
+#Creating VPC
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'True'
+      EnableDnsHostnames: 'True'
+      InstanceTenancy: default
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}_vpc
+
+#Creating Internet Gateway for Internet access
+  InternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-InternetGW
+#Attach Internet Gateway to newly created VPC
+  GatewayAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref myVPC
+      InternetGatewayId: !Ref InternetGateway
+
+#Creating Public Subnets inside VPC in first AZ
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      VpcId: !Ref myVPC
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select #Select the first value from the list
+        - 0
+        - !GetAZs
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PublicA
+
+#Creating Public Subnets inside VPC in second AZ
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.129.0/24
+      VpcId: !Ref myVPC
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select #Select the second value from the list
+        - 1
+        - !GetAZs
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PublicB
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      VpcId: !Ref myVPC
+      MapPublicIpOnLaunch: False
+      AvailabilityZone: !Select #Select the first value from the list
+        - 0
+        - !GetAZs
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PrivateSubnetA
+
+
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.130.0/24
+      VpcId: !Ref myVPC
+      MapPublicIpOnLaunch: False
+      AvailabilityZone: !Select #Select the second value from the list
+        - 1
+        - !GetAZs
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PrivateSubnetB
+          
+#Creating Public Route Table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref myVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PublicRT
+
+#Creating Default Route
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttach  #you need to have IGW Ready before you add a route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      GatewayId: !Ref InternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+
+#Associate Route Table with PublicSubnetA 
+  PublicSubnetRouteTableAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PublicRouteTable
+      - GatewayAttach
+      - PublicSubnetA
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+#Associate Route Table with PublicSubnetB
+  PublicSubnetRouteTableAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PublicRouteTable
+      - GatewayAttach
+      - PublicSubnetB
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  
+#Exporting the results
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref myVPC
+    Export:
+      Name: !Sub ${AWS::StackName}-vpc
+
+  PublicSubnetA:
+    Description: Public SubnetA for Public Instances
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub ${AWS::StackName}-PublicSubnetA
+
+
+  PublicSubnetB:
+    Description: Public SubnetB for Public Instances
+    Value: !Ref PublicSubnetB
+    Export:
+      Name: !Sub ${AWS::StackName}-PublicSubnetB
+
+
+  PrivateSubnetA:
+    Description: Private SubnetA for Private Instances
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub ${AWS::StackName}-PrivateSubnetA
+
+
+  PrivateSubnetB:
+    Description: Private SubnetB for Private Instances
+    Value: !Ref PrivateSubnetB
+    Export:
+      Name: !Sub ${AWS::StackName}-PrivateSubnetB

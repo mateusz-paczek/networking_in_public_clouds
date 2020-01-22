@@ -1,0 +1,37 @@
+---
+#Cloudformation template to create EC2 instance
+
+Parameters:
+  
+  SSHKey:
+    Description: Name of the existing EC2 keypair to enable SSH connection
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: testkeypair
+    ConstraintDescription: There has to be 'testkeypair' defined  !!!
+
+  AMI:
+    Description: Ubuntu AMI
+    Default: ami-02df9ea15c1778c9c
+    AllowedPattern: "(ami-[0-9a-f]{17}){0,1}"
+    Type: String
+
+  InstanceType:
+    Description: EC2 instance Type
+    Type: String
+    Default: t2.micro
+
+  #Netstack:
+  #  Description: Name of the networking stack
+   # Type: String
+
+
+
+Resources:
+  TestVM:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+
+
