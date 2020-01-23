@@ -20,9 +20,6 @@ Parameters:
     Type: String
     Default: t2.micro
 
-  #Netstack:
-  #  Description: Name of the networking stack
-   # Type: String
 
 
 
