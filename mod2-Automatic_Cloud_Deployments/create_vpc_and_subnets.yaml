@@ -44,7 +44,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-PublicB
-
+#Creating Private Subnets inside VPC in first AZ
   PrivateSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
@@ -59,7 +59,7 @@ Resources:
           Value: !Sub ${AWS::StackName}-PrivateSubnetA
 
 
-
+#Creating Private Subnets inside VPC in second AZ
   PrivateSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
