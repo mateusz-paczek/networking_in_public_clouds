@@ -2,6 +2,26 @@
 
 #CloudFormation Template to deploy Networking Stack in AWS Cloud
 
+Parameters:
+  
+  SSHKey:
+    Description: Name of the existing EC2 keypair to enable SSH connection
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: testkeypair
+    ConstraintDescription: There has to be 'testkeypair' defined  !!!
+
+  AMI:
+    Description: Ubuntu AMI
+    Default: ami-02df9ea15c1778c9c
+    AllowedPattern: "(ami-[0-9a-f]{17}){0,1}"
+    Type: String
+
+  InstanceType:
+    Description: EC2 instance Type
+    Type: String
+    Default: t2.micro
+
+
 Resources:
 #Creating VPC
   myVPC:
@@ -125,8 +145,66 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnetB
 
+
+#Creating Security Group
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH Traffic In and HTTP(S) and ICMP Out
+      GroupName: Public-SG
+      VpcId: !Ref myVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: icmp
+          FromPort: "-1"
+          ToPort: "-1"
+          CidrIp: 8.8.8.8/32
+
+#Creating 1st VM in PublicSubnetA
+  TestVmA:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+        - GroupSet: 
+            - !Ref SecurityGroup
+          AssociatePublicIpAddress: True
+          DeviceIndex: 0
+          DeleteOnTermination: True
+          SubnetId: !Ref PublicSubnetA  
+
+#Creating 1st VM in PublicSubnetA
+  TestVmB:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref SSHKey
+      ImageId: !Ref AMI
+      NetworkInterfaces:
+        - GroupSet: 
+            - !Ref SecurityGroup
+          AssociatePublicIpAddress: True
+          DeviceIndex: 0
+          DeleteOnTermination: True
+          SubnetId: !Ref PublicSubnetB
   
-#Exporting the results
+#Exporting some of the the results
 Outputs:
   VPC:
     Description: VPC ID
@@ -160,3 +238,10 @@ Outputs:
     Value: !Ref PrivateSubnetB
     Export:
       Name: !Sub ${AWS::StackName}-PrivateSubnetB
+
+  SecurityGroup:
+    Description: SecurityGroup ID for Public VMs
+    Value: !GetAtt SecurityGroup.GroupId
+    Export:
+      Name: !Sub ${AWS::StackName}-SgId
+
