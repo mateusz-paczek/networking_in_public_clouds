@@ -1,0 +1,10 @@
+#local .terraform directories
+**/.terraform/*
+
+#.tfstate files
+*.tfstate
+*.tfstate.*
+
+#remaining files not needed
+*.html
+*.jpg
