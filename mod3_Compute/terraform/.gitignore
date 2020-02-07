@@ -5,6 +5,3 @@
 *.tfstate
 *.tfstate.*
 
-#remaining files not needed
-*.html
-*.jpg

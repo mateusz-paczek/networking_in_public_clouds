@@ -42,7 +42,7 @@ resource aws_instance "web_server-1" {
 
 
   provisioner "file" {
-    content     = "<img src http://${aws_s3_bucket.test_bucket.website_endpoint}/${var.s3_object_name}>"
+    content     = "<img src=http://${aws_s3_bucket.test_bucket.website_endpoint}/${var.s3_object_name} />"
     destination = "/tmp/index.html"
   }
 
