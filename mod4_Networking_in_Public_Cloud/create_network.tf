@@ -74,7 +74,7 @@ resource "aws_route_table_association" "publicA" {
 
 #Create Security Group for JumpHost
 resource "aws_security_group" "JumpHostSG" {
-  name        = "PublicSG"
+  name        = "JumpHostSG"
   description = "Allow SSH Traffic In"
   vpc_id      = aws_vpc.tf_vpc.id
 
