@@ -14,7 +14,7 @@ Configuration done by Terraform
 5. Create InternetGW
 6. Create Route Table and add default route towards InternetGW
 7. Update default SG (that was created after VPC creation with inbound traffic (ssh, http, https))
-8. Create Security Group that is attached to JumpHost (only SSH is allowed)
+8. Create Security Group that is attached to Private-Server (only SSH is allowed from Default SG)
 9. Create EC2 Instance (JumpHost) with different KeyPair 
 10. Create EC2 Instance in PrivateA subnet (No access to/from Internet)
 
