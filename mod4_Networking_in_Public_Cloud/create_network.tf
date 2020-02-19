@@ -72,29 +72,6 @@ resource "aws_route_table_association" "publicA" {
 }
 
 
-#Create Security Group for JumpHost
-resource "aws_security_group" "JumpHostSG" {
-  name        = "JumpHostSG"
-  description = "Allow SSH Traffic In"
-  vpc_id      = aws_vpc.tf_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "JumpHost Security Group"
-  }
-}
 
 #Update default Security Group 
 resource "aws_default_security_group" "default" {
@@ -133,6 +110,25 @@ resource "aws_default_security_group" "default" {
 }
 
 
+
+#Create Security Group for PrivateSubnet
+resource "aws_security_group" "PrivateSG" {
+  name        = "PrivateSG"
+  description = "Allow SSH Traffic In"
+  vpc_id      = aws_vpc.tf_vpc.id
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_default_security_group.default.id]
+    #cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "PrivateSubnet Security Group"
+  }
+}
 #Create S3 bucket with public acl
 resource "aws_s3_bucket" "test_bucket" {
   bucket = "mpaczek-test"
@@ -195,7 +191,6 @@ resource "aws_instance" "jump_host-1" {
   subnet_id                   = aws_subnet.TF_PublicSubnetA.id
   associate_public_ip_address = true
   key_name                    = "jumphost"
-  vpc_security_group_ids      = [aws_security_group.JumpHostSG.id]
   tags = {
     Name = "Jump Host 1"
   }
@@ -203,11 +198,11 @@ resource "aws_instance" "jump_host-1" {
 
 #Create EC2 Instance in Private Subnet
 resource "aws_instance" "private_server-1" {
-  ami           = var.ubuntu_ami
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.TF_PrivateSubnetA.id
-  key_name      = var.SSH_key
-  #vpc_security_group_ids      = [aws_security_group.default.id]
+  ami                    = var.ubuntu_ami
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.TF_PrivateSubnetA.id
+  key_name               = var.SSH_key
+  vpc_security_group_ids = [aws_security_group.PrivateSG.id]
   tags = {
     Name = "Private Server 1"
   }
