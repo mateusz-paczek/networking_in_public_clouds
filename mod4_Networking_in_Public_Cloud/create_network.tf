@@ -4,6 +4,39 @@ provider "aws" {
 }
 
 
+
+####################################################################################
+# DATA
+####################################################################################
+
+#Latest Ubuntu 18.04 image)
+data "aws_ami" "ubuntu-18_04" {
+  most_recent = true
+  owners      = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+
+
+####################################################################################
+# RESOURCES
+####################################################################################
+
+
 #Create AWS VPC (CIDR Values defined in variables.tf)
 resource "aws_vpc" "tf_vpc" {
   cidr_block           = var.vpc_cidr
@@ -150,7 +183,7 @@ resource "aws_s3_bucket_object" "test_bucket_object" {
 
 #Create 1st VM in PublicSubnetA
 resource "aws_instance" "web_server-1" {
-  ami                         = var.ubuntu_ami
+  ami                         = data.aws_ami.ubuntu-18_04.id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.TF_PublicSubnetA.id
   associate_public_ip_address = true
@@ -186,7 +219,7 @@ resource "aws_instance" "web_server-1" {
 
 #Create JumpHost VM in PublicSubnetA
 resource "aws_instance" "jump_host-1" {
-  ami                         = var.ubuntu_ami
+  ami                         = data.aws_ami.ubuntu-18_04.id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.TF_PublicSubnetA.id
   associate_public_ip_address = true
@@ -198,7 +231,7 @@ resource "aws_instance" "jump_host-1" {
 
 #Create EC2 Instance in Private Subnet
 resource "aws_instance" "private_server-1" {
-  ami                    = var.ubuntu_ami
+  ami                    = data.aws_ami.ubuntu-18_04.id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.TF_PrivateSubnetA.id
   key_name               = var.SSH_key
