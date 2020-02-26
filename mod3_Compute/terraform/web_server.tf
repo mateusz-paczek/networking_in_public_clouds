@@ -3,6 +3,36 @@ provider "aws" {
   region = var.aws_region
 }
 
+####################################################################################
+# DATA
+####################################################################################
+
+#Latest Ubuntu 18.04 image)
+data "aws_ami" "ubuntu-18_04" {
+  most_recent = true
+  owners      = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+
+####################################################################################
+# RESOURCE
+####################################################################################
+
 
 #Create S3 bucket with public acl
 resource "aws_s3_bucket" "test_bucket" {
@@ -28,7 +58,7 @@ resource "aws_s3_bucket_object" "test_bucket_object" {
 
 #Create Web Server in default VPC
 resource aws_instance "web_server-1" {
-  ami                         = var.ubuntu_ami
+  ami                         = data.aws_ami.ubuntu-18_04.id
   instance_type               = var.instance_type
   associate_public_ip_address = true
   key_name                    = var.SSH_key
