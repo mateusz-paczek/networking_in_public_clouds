@@ -106,45 +106,7 @@ resource "aws_route_table_association" "publicA" {
 
 
 
-#Update default Security Group 
-resource "aws_default_security_group" "default" {
-
-  vpc_id = aws_vpc.tf_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "Default Security Group"
-  }
-}
-
-
-
-#Create Security Group for WebServer
+# Create Security Group for WebServer
 resource "aws_security_group" "WebServer_SG" {
   name        = "WebServer_SG"
   description = "Allow HTTP and HTTPS Traffic In and Out"
@@ -196,7 +158,7 @@ resource "aws_security_group" "WebServer_SG" {
   }
 }
 
-#Create Security Group for JumpHost
+# Create Security Group for JumpHost
 resource "aws_security_group" "JumpHost_SG" {
   name        = "JumpHost_SG"
   description = "Allow SSH Traffic In and Out"
@@ -222,7 +184,7 @@ resource "aws_security_group" "JumpHost_SG" {
   }
 }
 
-#Create Security Group for Database Servers
+# Create Security Group for Database Servers
 resource "aws_security_group" "DatabaseServer_SG" {
   name        = "DatabaseServer_SG"
   description = "Allow SQL Traffic In"
@@ -251,6 +213,7 @@ resource "aws_security_group" "DatabaseServer_SG" {
     protocol        = "tcp"
     security_groups = [aws_security_group.WebServer_SG.id]
   }
+
   ingress {
     from_port = 80
     to_port   = 80
@@ -265,6 +228,7 @@ resource "aws_security_group" "DatabaseServer_SG" {
     protocol        = "tcp"
     security_groups = [aws_security_group.JumpHost_SG.id]
   }
+
   egress {
     from_port = 80
     to_port   = 80
@@ -284,7 +248,7 @@ resource "aws_security_group" "DatabaseServer_SG" {
   }
 }
 
-#Create S3 bucket with public acl
+# Create S3 bucket with public acl
 resource "aws_s3_bucket" "test_bucket" {
   bucket = "mpaczek-test"
   acl    = "public-read"
@@ -295,7 +259,7 @@ resource "aws_s3_bucket" "test_bucket" {
   }
 }
 
-#Upload jpg file to previously created bucket
+# Upload jpg file to previously created bucket
 resource "aws_s3_bucket_object" "test_bucket_object" {
   bucket = aws_s3_bucket.test_bucket.id
   key    = var.s3_object_name
@@ -303,7 +267,7 @@ resource "aws_s3_bucket_object" "test_bucket_object" {
   acl    = "public-read"
 }
 
-#Create 1st VM in PublicSubnetA
+# Create WebServer VM in PublicSubnetA
 resource "aws_instance" "web_server-1" {
   ami                         = data.aws_ami.ubuntu-18_04.id
   instance_type               = var.instance_type
@@ -339,7 +303,7 @@ resource "aws_instance" "web_server-1" {
   }
 }
 
-#Create JumpHost VM in PublicSubnetA
+# Create JumpHost VM in PublicSubnetA
 resource "aws_instance" "jump_host-1" {
   ami                         = data.aws_ami.ubuntu-18_04.id
   instance_type               = var.instance_type
@@ -352,7 +316,7 @@ resource "aws_instance" "jump_host-1" {
   }
 }
 
-#Create EC2 Instance in Private Subnet - equivalent to Database server
+# Create EC2 Instance in Private Subnet - equivalent to Database server
 resource "aws_instance" "private_server-1" {
   ami                    = data.aws_ami.ubuntu-18_04.id
   instance_type          = var.instance_type
@@ -365,7 +329,7 @@ resource "aws_instance" "private_server-1" {
 }
 
 
-#Create AWS IAM TEST User that have EC2 and VPC Read Only permissions
+# Create AWS IAM TEST User that have EC2 and VPC Read Only permissions
 resource "aws_iam_user" "ec2_test" {
   name = "ec2_test"
   path = "/"
