@@ -112,12 +112,12 @@ resource "aws_security_group" "WebServer_SG" {
   description = "Allow HTTP and HTTPS Traffic In and Out"
   vpc_id      = aws_vpc.tf_vpc.id
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ingress {
+  #   from_port   = 22
+  #   to_port     = 22
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
   ingress {
     from_port   = 80
@@ -168,7 +168,7 @@ resource "aws_security_group" "JumpHost_SG" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["95.49.69.207/32"]
+    cidr_blocks = ["83.28.245.16/32"]
   }
 
   egress {
@@ -277,10 +277,13 @@ resource "aws_instance" "web_server-1" {
   vpc_security_group_ids      = [aws_security_group.WebServer_SG.id]
 
   connection {
-    host        = aws_instance.web_server-1.public_ip
+    host        = self.private_ip
     user        = "ubuntu"
     type        = "ssh"
-    private_key = file(var.private_key)
+    private_key = file("~/.ssh/testkeypair.pem")
+
+    bastion_host        = aws_instance.jump_host-1.public_ip
+    bastion_private_key = file("~/.ssh/jumphost.pem")
   }
 
 
@@ -314,7 +317,12 @@ resource "aws_instance" "jump_host-1" {
   tags = {
     Name = "Jump Host 1"
   }
+
+
 }
+
+
+
 
 # Create EC2 Instance in Private Subnet - equivalent to Database server
 resource "aws_instance" "private_server-1" {
@@ -325,6 +333,20 @@ resource "aws_instance" "private_server-1" {
   vpc_security_group_ids = [aws_security_group.DatabaseServer_SG.id]
   tags = {
     Name = "Database Server 1"
+  }
+
+  connection {
+    host        = self.private_ip
+    user        = "ubuntu"
+    type        = "ssh"
+    private_key = file("~/.ssh/testkeypair.pem")
+
+    bastion_host        = aws_instance.jump_host-1.public_ip
+    bastion_private_key = file("~/.ssh/jumphost.pem")
+  }
+
+  provisioner "remote-exec" {
+    inline = ["echo 'CONNECTED to PRIVATE!'"]
   }
 }
 
@@ -340,13 +362,13 @@ resource "aws_iam_user" "ec2_test" {
 }
 
 resource "aws_iam_access_key" "ec2_test" {
-  user = "${aws_iam_user.ec2_test.name}"
+  user = aws_iam_user.ec2_test.name
 }
 
 # Create an policy for created user - allowing EC2:Describe*
 resource "aws_iam_user_policy" "ec2_ro" {
   name = "ec2_test"
-  user = "${aws_iam_user.ec2_test.name}"
+  user = aws_iam_user.ec2_test.name
 
   policy = <<EOF
 {

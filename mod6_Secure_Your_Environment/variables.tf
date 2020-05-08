@@ -23,7 +23,7 @@ variable "SSH_key" {
 }
 
 #Variable used to specify Private Key (used to connect to VM with Terraform Provisioner)
-variable "private_key" {}
+#variable "private_key" {}
 
 variable "vpc_cidr" {
   description = "CIDR for the whole VPC"
